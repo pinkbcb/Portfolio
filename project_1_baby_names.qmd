@@ -1,0 +1,209 @@
+---
+title: "Client Report - Project 1"
+subtitle: "Course DS 250"
+author: "Bethany Ball"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+#| label: libraries
+#| include: false
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+```
+
+
+## Elevator pitch
+
+Using the name data along with the year people can find many interesting trends including, how pop culture influences baby names, the popularity of biblical names, and often have good guesses of when someone was born based solely on the name. This data shows interesting trends in baby names over the years, and how they are influenced by different factors. However, it is important to note that an individual can't come to a complete conclusion without further data.
+
+```{python}
+#| label: project data
+#| code-summary: Read and format project data
+# Include and execute your code here
+df = pd.read_csv("https://github.com/byuidatascience/data4names/raw/master/data-raw/names_year/names_year.csv")
+```
+
+## QUESTION|TASK 1
+**How does your name at your birth year compare to its use historically?**
+
+My name, Bethany was most popular from 1980 to 2000. Before and after that there were only a couple hundred people were given that name. However, at its height about 2,000 babies were given that name. I was born in 2004, right when the popularity of the name was dropping off.
+
+```{python}
+import pandas as pd
+import plotly.express as px
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+# Read the CSV file from the URL
+url = "https://github.com/byuidatascience/data4names/raw/master/data-raw/names_year/names_year.csv"
+names_year = pd.read_csv(url)
+
+# Filter for the name 'Bethany'
+bethany_names_year = names_year.query('name == "Bethany"')
+
+# Create a line plot
+bethany_plot = px.line(bethany_names_year, x = 'year', y = 'Total',
+                       labels={'Total': 'Number of babies born with the name'},
+                       title='Popularity of the name Bethany over the years')
+
+# Add a vertical line at the year 2004
+bethany_plot.add_vline(x = 2004, line_dash = "dash", line_color = "red", annotation_text = "My birth year",
+                       annotation_position = "bottom left")
+
+# Show the plot
+bethany_plot.show()
+```
+**Findings**
+
+-The name Bethany was rarely given to new babies until the 1950s
+
+-In 1988  the name was at its peek of popularity and was given to 3,294 babies.
+
+-In 2004 when I was born and given the name Bethany it was dropping in popularity very quickly. Only 1,614 babies were given that name.
+
+## QUESTION|TASK 2
+**If you talked to someone named Brittany on the phone, what is your guess of his or her age? What ages would you not guess?**
+
+I would guess based on probability that someone named Brittany would be born between 1985 and 1995, which would mean that as of 2024 they would be between the ages of 39 and 29. Before these years there were only about 500 babies given that name per year and after those years there were only about a thousand babies given that name per year. This may seem like a lot, but between 1985 and 1995 it was more like 30,000 per year.
+
+```{python}
+import pandas as pd
+import plotly.express as px
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+# Read the CSV file from the URL
+url = "https://github.com/byuidatascience/data4names/raw/master/data-raw/names_year/names_year.csv"
+names_year = pd.read_csv(url)
+
+# filters by name
+Brittany_names_year = names_year.query('name == "Brittany"')
+
+
+# Create a line plot
+Brittany_plot = px.line(Brittany_names_year, x = 'year', y = 'Total',
+                       labels={'Total': 'Number of babies born with the name'},
+                       title='Popularity of the name Brittany over the years')
+
+# shows graph
+Brittany_plot.show()
+```
+**Findings**
+
+-The name Brittany was rarely used only a couple of hundred babies were given that name nationwide before the 1980s.
+
+-The name Brittany rose very quickly starting in the 1980s and reached its peak in 1990 with 32.5K babies given that name.
+
+-After the peak in 1990 the popularity dropped just as quickly as it rose, leveling out in about the year 2000.
+
+-After the popularity dropped it stay a little higher overall before the drop of about 1,000 born with that name on average instead of about 500 before the spick.  However, this increase was nowhere near where it was at its height.
+
+## QUESTION|TASK 3
+**Mary, Martha, Peter, and Paul are all Christian names. From 1920 - 2000, compare the name usage of each of the four names. What trends do you notice?**
+
+The most apparent trend is that the popularity of all of these biblical names went down substantially in the 1970s. Another notable trend is that all of these names were most popular in the 1950s. Of these names Mary was the most popular at about 54,000 at its height of popularity, followed shortly by Paul, with about 25,000 at its height. However, both Martha and Peter were never as popular at about 11,000 at their height.
+
+```{python}
+import pandas as pd
+import plotly.express as px
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+# Read the CSV file from the URL
+url = "https://github.com/byuidatascience/data4names/raw/master/data-raw/names_year/names_year.csv"
+names_year = pd.read_csv(url)
+
+# Filters the data for the years 1920 to 2000 and for the specific names.
+names = ['Mary', 'Martha', 'Peter', 'Paul']
+names_year_filtered = names_year[(names_year['year'] >= 1920) & (names_year['year'] <= 2000) & (names_year['name'].isin(names))]
+
+# makes the graph
+fig = px.line(names_year_filtered, x = 'year', y = 'Total', color = 'name',
+              # adds captions and title
+              labels={'Total': 'Total number of babies born with name'},
+              title='Showing trends of biblical names popularity dropping in the 1970s and other trends (1920-2000)')
+
+# Customize layout
+fig.update_layout(
+    xaxis_title = 'Year',
+    legend_title_text = 'Names',
+)
+
+# Show the graph
+fig.show()
+```
+**Findings**
+
+-These examples of biblical names dropped in popularity significantly from the late 1950s to the early 1970s.
+
+-In order of popularity over the years these names rank from most to least popular: Mary, Paul, Peter, and Martha.
+
+-These biblical names were all at the height of their popularity around the 1950s.
+
+-The name Mary at its height was almost 2x as popular as the next most popular name at the time Paul.
+
+-After the substantial drop in 1975 all of the names stayed fairly popular at between 4 to 1 thousand names given to new babies a year.
+
+## QUESTION|TASK 4
+**Think of a unique name from a famous movie. Plot the usage of that name and see how changes line up with the movie release. Does it look like the movie had an effect on usage?**
+
+It is hard to say if the movie had an effect on the name's popularity. The popularity was already going up when the movie came out, but the overall trend of the name being more popular did stay higher. However, in 1997, the year average age of the children who watched that show when it first came out were having children there first children, it was a little lower than before the movie came out. However, in the early 2000s, it picked up significantly. It is hard to say without more information if the movie caused this spick or if it was something else.
+
+```{python}
+import pandas as pd
+import plotly.express as px
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+# Read the CSV file from the URL
+url = "https://github.com/byuidatascience/data4names/raw/master/data-raw/names_year/names_year.csv"
+df = pd.read_csv(url)
+
+# Filter by the name 'Elliott'
+Elliott_df = df.query('name == "Elliott"')
+
+# Create a line plot
+Elliott_plot = px.line(Elliott_df, x = 'year', y = 'Total', labels={'Total': 'Number of babies born with the name'},
+                       title = 'Popularity of the name Elliott over the years in relation to the movie ET')
+
+# Add a vertical line at the year 1982
+Elliott_plot.add_vline(x=1982, line_dash = "dash", line_color = "red", annotation_text = "Release of E.T.", 
+                       annotation_position = "bottom right")
+
+# Show the plot
+Elliott_plot.show()
+```
+
+**Findings**
+
+-The name Elliott's overall trend is steadily going up from the beginning of the data to the end.
+
+-The name rose in popularity significantly starting in the early 2000s, and as of the data we have could continue to go up.
+
+-The popularity jumped when the movie came out, however, it slumped again until about 20 years later, so it is hard to say if it was the movie or some other factor that caused the significant spike in the 2000s.
+
+-The findings of iff the movie had an effect are somewhat inconclusive. We need more data to get a better idea of if the spick was caused by the movie or simply loosely correlated.

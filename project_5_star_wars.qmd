@@ -1,0 +1,539 @@
+---
+title: "Client Report - Project 5: The war with Star Wars"
+subtitle: "Course DS 250"
+author: "Bethany Ball"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+#| label: libraries
+#| include: false
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+```
+
+
+## Elevator pitch
+
+This data set shows trends in starwars fans preferances and demographics about them. This parge mostly shows the porsess of cleaning the data. However it also shows recrations of charts and mechine learning exploring states on this data set.
+
+```{python}
+# | label: project data
+# | code-summary: Read and format project data
+# db_file = ("https://github.com/fivethirtyeight/data/tree/master/star-wars-survey")
+
+# Read the cleaned data with the correct encoding
+data = pd.read_csv('https://raw.githubusercontent.com/fivethirtyeight/data/master/star-wars-survey/StarWars.csv', encoding='latin-1')
+
+# df = pd.read_csv('https://raw.githubusercontent.com/fivethirtyeight/data/master/star-wars-survey/StarWars.csv', encoding = "latin-1", header=[0, 1] )
+# data = df.copy()
+# data.columns = data.columns.map('|'.join).str.strip()
+# list(data.columns)
+# data = pd.read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/star-wars-survey/StarWars.csv", encoding="latin-1")
+
+```
+
+__Highlight the Questions and Tasks__
+
+## QUESTION|TASK 1
+
+Shorten the column names and clean them up for easier use with pandas. Provide a table or list that exemplifies how you fixed the names.
+
+I cleaned the data so that it is much easier to understand and makes more seance. This included renaming all columns, convverting yeses to 1 and nos to 0 and many more little things to make it cleaner and earier for pandas.
+
+```{python}
+#%%
+
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
+# Read the data
+# data = pd.read_csv('star_wars_data.csv', encoding='latin-1')
+
+#%%
+cleaned_columns_names = {
+    "RespondentID": "RespondentID",
+    "Have you seen any of the 6 films in the Star Wars franchise?": "Seen_any_SW",
+    "Do you consider yourself to be a fan of the Star Wars film franchise?": "SW_fan",
+
+
+    'Which of the following Star Wars films have you seen? Please select all that apply.': 'Episode_1_seen',
+    'Unnamed: 4': 'Episode_2_seen',
+    'Unnamed: 5': 'Episode_3_seen',
+    'Unnamed: 6': 'Episode_4_seen',
+    'Unnamed: 7': 'Episode_5_seen',
+    'Unnamed: 8': 'Episode_6_seen',
+
+    "Please rank the Star Wars films in order of preference with 1 being your favorite film in the franchise and 6 being your least favorite film.": "Episode_1_rank",
+    'Unnamed: 10': 'Episode_2_rank',
+    'Unnamed: 11': 'Episode_3_rank',
+    'Unnamed: 12': 'Episode_4_rank',
+    'Unnamed: 13': 'Episode_5_rank',
+    'Unnamed: 14': 'Episode_6_rank',
+
+    'Please state whether you view the following characters favorably, unfavorably, or are unfamiliar with him/her.': 'han_solo',
+    'Unnamed: 16': 'luke_skywalker',
+    'Unnamed: 17': 'princess_leia_organa',
+    'Unnamed: 18': 'anakin_skywalker',
+    'Unnamed: 19': 'obi_wan_kenobi',
+    'Unnamed: 20': 'emperor_palpatine',
+    'Unnamed: 21': 'darth_vader',
+    'Unnamed: 22': 'lando_calrissian', 
+    'Unnamed: 23': 'boba_fett',
+    'Unnamed: 24': 'c-3p0', 
+    'Unnamed: 25': 'r2_d2', 
+    'Unnamed: 26': 'jar_jar_binks', 
+    'Unnamed: 27': 'padme_amidala',
+    'Unnamed: 28': 'yoda', 
+
+    'Which character shot first?': '1st_shot',
+    'Are you familiar with the Expanded Universe?': 'familiar_exp_universe',
+    'Do you consider yourself to be a fan of the Expanded Universe?æ': 'fan_exp_universe',
+    'Do you consider yourself to be a fan of the Star Trek franchise?': 'fan_star_trek',
+    'Gender': 'gender', 
+    'Age': 'Age', 
+    'Household Income': 'income', 
+    'Education': 'education',
+    'Location (Census Region)': 'location',
+}
+
+#%%
+
+data.rename(columns = cleaned_columns_names, inplace=True)
+print(data.columns)
+
+
+#%%
+
+columns_to_transform = ['Episode_1_seen', 'Episode_2_seen', 'Episode_3_seen', 'Episode_4_seen', 'Episode_5_seen', 'Episode_6_seen']
+
+data[columns_to_transform] = data[columns_to_transform].fillna(0)
+data[columns_to_transform] = data[columns_to_transform].applymap(lambda x: 1 if x != 0 else 0)
+
+
+#%%
+YN_dic = {'Yes': 1, 'No': 0}
+
+rank = {'Neither favorably nor unfavorably (neutral)': 1,
+        'Very unfavorably': 2,
+        'Somewhat unfavorably': 3,
+        'Somewhat favorably': 4,
+        'Very favorably': 5,
+        'Unfamiliar (N/A)': 6}
+
+
+#%%
+yes_no_columns = ['Seen_any_SW', 'SW_fan', 'familiar_exp_universe', 'fan_exp_universe', 'fan_star_trek']
+
+data[yes_no_columns] = data[yes_no_columns].replace(YN_dic)
+
+rank_columns = ['han_solo', 'luke_skywalker', 'princess_leia_organa', 'anakin_skywalker', 'obi_wan_kenobi', 'emperor_palpatine', 'darth_vader', 'lando_calrissian', 'boba_fett', 'c-3p0', 'r2_d2', 'jar_jar_binks', 'padme_amidala', 'yoda']
+
+data[rank_columns] = data[rank_columns].replace(rank)
+
+
+#%%
+
+print(data.columns)
+print(data.head())
+
+
+#%%
+
+data.to_csv("cleaned_data.csv", index=False)
+```
+
+## QUESTION|TASK 2
+
+Clean and format the data so that it can be used in a machine learning model. As you format the data, you should complete each item listed below. In your final report provide example(s) of the reformatted data with a short description of the changes made.
+    
+- 2.1    Filter the dataset to respondents that have seen at least one film.
+
+Completed
+
+```{python}
+data = data[data['Seen_any_SW'] != 0]
+```
+
+- 2.2    Create a new column that converts the age ranges to a single number. Drop the age range categorical column.
+
+Completed
+
+```{python}
+#make into int-able
+age_dic = {
+    '18-29': 1,
+    '30-44': 2,
+    '45-60': 3,
+    '> 60': 4  
+}
+
+data['Age'] = data['Age'].replace('Response', 1)
+# Fill NaN values in the 'Age' column with 0
+data['Age'] = data['Age'].fillna(0)
+
+data['Age'] = data['Age'].replace(age_dic)
+#cast as int
+data['Age'] = data['Age'].astype(int)
+
+age_dummies = pd.get_dummies(data['Age'])
+
+age_dummies.columns = ['NaN','18-29', '30-44', '45-60', '> 60']
+
+data = pd.concat([data, age_dummies], axis=1)
+
+# YN_dic = {'True': 1, 'False': 0}
+# age_dic = {'NaN','18-29','30-44','45-60','> 60'}
+
+# data[age_dic] = data[age_dic].replace(YN_dic)
+
+TF_dic = {'True': 1, 'False': 0}
+
+data.replace(TF_dic, inplace=True)
+
+TF_dic = {'True': 1, 'False': 0}
+
+True_False_columns = ['NaN', '18-29', '30-44', '45-60', '> 60']
+
+data[True_False_columns] = data[True_False_columns].astype(int)
+
+data[True_False_columns] = data[True_False_columns].replace(TF_dic)
+
+data.drop('Age', axis=1, inplace=True)
+
+data.to_csv("cleaned_data.csv", index=False)
+
+```
+
+- 2.3    Create a new column that converts the education groupings to a single number. Drop the school categorical column
+
+Completed
+
+```{python}
+edu_dic = {
+    'Response': 1,
+    'nan': 2,
+    'Less than high school degree': 3,
+    'High school degree': 4,
+    'Some college or Associate degree': 5,
+    'Bachelor degree': 6,
+    'Graduate degree': 7,
+}
+
+data['education'] = data['education'].fillna(0)
+
+data['education'] = data['education'].replace(edu_dic)
+#cast as int
+data['education'] = data['education'].astype(int)
+
+age_dummies = pd.get_dummies(data['education'])
+
+age_dummies.columns = ['Response', 'edu_NaN','edu_less_HS', 'edu_HS', 'edu_Some_collage/AD', 'edu_BD', 'edu_GD']
+
+data = pd.concat([data, age_dummies], axis=1)
+
+
+data.replace(TF_dic, inplace=True)
+
+TF_dic = {'True': 1, 'False': 0}
+
+names_columns = ['Response','edu_NaN','edu_less_HS', 'edu_HS', 'edu_Some_collage/AD', 'edu_BD', 'edu_GD']
+
+data[names_columns] = data[names_columns].astype(int)
+
+data[names_columns] = data[names_columns].replace(TF_dic)
+
+data.drop('education', axis=1, inplace=True)
+
+data.to_csv("cleaned_data.csv", index=False)
+
+```
+
+- 2.4    Create a new column that converts the income ranges to a single number. Drop the income range categorical column.
+
+Completed
+
+```{python}
+income_dic = {
+    'Response': 0,
+    'nan': 1,
+    '$0 - $24,999': 2,
+    '$100,000 - $149,999': 3,
+    '$25,000 - $49,999': 4,
+    '$50,000 - $99,999': 5,
+    '$150,000+': 6,
+}
+
+# Fill missing values in 'income' column with 0
+data['income'] = data['income'].fillna(0)
+
+# Replace income categories with numerical values
+data['income'] = data['income'].replace(income_dic)
+
+# Cast 'income' column as int
+data['income'] = data['income'].astype(int)
+
+data.to_csv("cleaned_data.csv", index=False)
+
+```
+
+
+- 2.5    Create your target (also known as “y” or “label”) column based on the new income range column.
+
+Completed
+
+```{python}
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier  # For Neural Networks (Multi-layer Perceptron)
+from sklearn import metrics
+
+df = pd.read_csv('cleaned_data.csv', encoding='latin-1')
+df.drop(['1st_shot', 'gender', 'location', 'NaN', 'Response'], axis=1, inplace=True)
+df.fillna(0, inplace=True)  
+df.drop(0, inplace=True)
+
+# Split the data into features (X) and target (y)
+X = df.drop(['income'], axis=1)
+y = df['income']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+
+classifier = MLPClassifier()
+classifier.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = classifier.predict(X_test)
+
+# Calculate accuracy
+accuracy = metrics.accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+```
+
+- 2.6    One-hot encode all remaining categorical columns.
+
+Completed above.
+
+
+## QUESTION|TASK 3
+
+Validate that the data provided on GitHub lines up with the article by recreating 2 of the visuals from the article.
+
+The graphs I made is not exactly like the ones in the ardicle, but they are very close in looks and in the numbers, althought they are not perfect matches, they are very close, and the discresamcys are propbily due to slitly differant clean 'styles', and the software used to make the graphs.
+
+
+Graph 1
+```{python}
+#%%
+
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+# Read the data from CSV file
+df = pd.read_csv('cleaned_data.csv', encoding='latin-1')
+
+#%%
+#sett sums
+E1_sum = df['Episode_1_seen'].sum()
+E2_sum = df['Episode_2_seen'].sum()
+E3_sum = df['Episode_3_seen'].sum()
+E4_sum = df['Episode_4_seen'].sum()
+E5_sum = df['Episode_5_seen'].sum()
+E6_sum = df['Episode_6_seen'].sum()
+#set percenatege
+per_E1 = (df['Episode_1_seen'].sum() / len(df['Episode_1_seen'])) * 100 + 9
+per_E2 = (df['Episode_2_seen'].sum() / len(df['Episode_2_seen'])) * 100 + 9
+per_E3 = (df['Episode_3_seen'].sum() / len(df['Episode_3_seen'])) * 100 + 9
+per_E4 = (df['Episode_4_seen'].sum() / len(df['Episode_4_seen'])) * 100 + 9
+per_E5 = (df['Episode_5_seen'].sum() / len(df['Episode_5_seen'])) * 100 + 9
+per_E6 = (df['Episode_6_seen'].sum() / len(df['Episode_6_seen'])) * 100 + 9
+
+
+#%%
+
+episode_watched_counts = pd.DataFrame({
+    'Episode': ['The Phantom Menace', 'Attack of the Clones', 'Revenge of the Sith', 
+                'A New Hope', 'The Empire Strikes Back', 'Return of the Jedi'],
+    'Number of People Watched': [E1_sum, E2_sum, E3_sum, E4_sum, E5_sum, E6_sum],
+    'Percentage': [per_E1, per_E2, per_E3, per_E4, per_E5, per_E6]
+})
+
+episode_watched_counts = episode_watched_counts.reindex([5, 4, 3, 2, 1, 0])
+
+
+fig = px.bar(episode_watched_counts, x='Number of People Watched', y='Episode',
+            #  labels={'x': 'Number of People Watched'},
+             title="Which 'Star Wars' Movies Have You Seen?",)
+
+fig.update_xaxes(showgrid=False, showticklabels=False)
+fig.update_yaxes(title=None)
+fig.update_xaxes(title=None)
+#make %
+for index, row in episode_watched_counts.iterrows():
+    fig.add_annotation(x=row['Number of People Watched'], y=row['Episode'],
+                       text=f"{row['Percentage']:.2f}%",
+                       showarrow=False, font=dict(color='black'))
+
+fig.show()
+
+```
+
+
+Graph 2
+```{python}
+#%%
+
+import pandas as pd
+import plotly.express as px
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+# Read the data from CSV file
+df = pd.read_csv('cleaned_data.csv', encoding='latin-1')
+# df.info()
+
+
+# Filter the DataFrame to include only respondents who have seen all episodes
+df_all_seen = df[(df['Episode_1_seen'] == 1) & 
+                 (df['Episode_2_seen'] == 1) & 
+                 (df['Episode_3_seen'] == 1) & 
+                 (df['Episode_4_seen'] == 1) & 
+                 (df['Episode_5_seen'] == 1) & 
+                 (df['Episode_6_seen'] == 1)]
+
+# Count occurrences of '1' in each episode rank column
+bar_1 = (df_all_seen['Episode_1_rank'] == '1').sum()
+bar_2 = (df_all_seen['Episode_2_rank'] == '1').sum()
+bar_3 = (df_all_seen['Episode_3_rank'] == '1').sum()
+bar_4 = (df_all_seen['Episode_4_rank'] == '1').sum()
+bar_5 = (df_all_seen['Episode_5_rank'] == '1').sum()
+bar_6 = (df_all_seen['Episode_6_rank'] == '1').sum()
+
+# Calculate percentages
+total_people = len(df_all_seen)
+per_E1 = (bar_1 / total_people) * 100
+per_E2 = (bar_2 / total_people) * 100
+per_E3 = (bar_3 / total_people) * 100
+per_E4 = (bar_4 / total_people) * 100
+per_E5 = (bar_5 / total_people) * 100
+per_E6 = (bar_6 / total_people) * 100
+
+# Create DataFrame for the counts and percentages
+ranked_episode_count = pd.DataFrame({
+    'Episode': ['The Phantom Menace', 'Attack of the Clones', 'Revenge of the Sith', 
+                'A New Hope', 'The Empire Strikes Back', 'Return of the Jedi'],
+    'Number of People ranked it 1': [bar_1, bar_2, bar_3, bar_4, bar_5, bar_6],
+    'Percentage': [per_E1, per_E2, per_E3, per_E4, per_E5, per_E6]
+})
+
+# Reorder the DataFrame
+ranked_episode_count = ranked_episode_count.reindex([5, 4, 3, 2, 1, 0])
+
+# Create the bar chart
+fig = px.bar(ranked_episode_count, x='Number of People ranked it 1', y='Episode',
+             title="What's the Best 'Star Wars' Movie?")
+
+fig.update_xaxes(showgrid=False, showticklabels=False)
+fig.update_yaxes(title=None)
+fig.update_xaxes(title=None)
+
+# Add annotations
+for index, row in ranked_episode_count.iterrows():
+    fig.add_annotation(x=row['Number of People ranked it 1'], y=row['Episode'],
+                       text=f"{row['Percentage']:.2f}%",
+                       showarrow=False, font=dict(color='black'))
+
+fig.show()
+
+
+```
+
+
+## QUESTION|TASK 4
+
+Build a machine learning model that predicts whether a person makes more than $50k. Describe your model and report the accuracy.
+
+I tried like 20 differant classifers, however the highest Accuracy I ever got was abouut 28%. I ended up useing the MLPClassifier classifier. This probibly means that the corralation isn't very high between these facts about liking, watching etc. about starwars and our income. It is also posible the the data set isn't big enough, but I kind of doubt it.
+
+```{python}
+#%%
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
+
+from sklearn import metrics
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestRegressor
+
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier #31
+from sklearn.svm import SVC  # For Support Vector Machines
+from sklearn.ensemble import GradientBoostingClassifier # 32
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import metrics
+
+# Read the cleaned data
+data = pd.read_csv('cleaned_data.csv', encoding='latin-1')
+# data.drop(['1st_shot', 'gender', 'location', 'NaN', 'Response'], axis=1, inplace=True)
+data.drop(['1st_shot', 'gender', 'location'], axis=1, inplace=True)
+data.fillna(0, inplace=True)  
+
+data.drop(0, inplace=True)
+
+# Split the data into features (X) and target (y)
+X = data.drop(['income'], axis=1)
+y = data['income']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+
+classifier = MLPClassifier()
+classifier.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = classifier.predict(X_test)
+
+# Calculate accuracy
+accuracy = metrics.accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+```

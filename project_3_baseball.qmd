@@ -1,0 +1,326 @@
+---
+title: "Finding Relationships in Baseball - Project 3"
+subtitle: "Course DS 250"
+author: "Bethany Ball"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+#| label: libraries
+#| include: false
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import sqlite3 as aq
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+```
+
+
+## Elevator pitch
+
+Overall this data shows that you have to be careful with averages because if one person did one thing once and succeeded then they will have a perfect average, but that does not mean that they are the best. This data also shows that teams/players that are good usually stay good and that teams/players that are bad usually stay bad. Overall I think this data is a warning to know our data set and which values you don't want to include because it will just mess with the averages, and how if you don't have enough information on a player, team, etc you really shouldn't make averages with thoughts numbers until you have enough data for it too be meaningful.
+
+```{python}
+#| label: project data
+#| code-summary: Read and format project data
+# Include and execute your code here
+import sqlite3
+
+# Path to your SQLite database file
+db_file = "https://byuistats.github.io/DS250-Course/Data/lahmansbaseballdb.sqlite"
+
+
+```
+
+## QUESTION|TASK 1
+
+ Write an SQL query to create a new dataframe about baseball players who attended BYU-Idaho. The new table should contain five columns: playerID, schoolID, salary, and the yearID/teamID associated with each salary. Order the table by salary (highest to lowest) and print out the table in your report.
+
+```{python}
+# Connect to the SQLite database
+file = 'lahmansbaseballdb.sqlite'
+con = sqlite3.connect(file)
+
+# Execute the SQL query and store the results in a DataFrame
+query = """
+SELECT 
+    s.playerID,
+    sl.schoolID,
+    s.salary,
+    s.yearID || '/' || s.teamID AS year_team
+FROM 
+    schools sl
+JOIN
+    collegeplaying cp ON cp.schoolID = sl.schoolID
+JOIN
+    salaries s ON s.playerID = cp.playerID
+WHERE 
+    sl.schoolID = 'idbyuid'
+ORDER BY 
+    s.salary DESC;
+"""
+df = pd.read_sql_query(query, con)
+
+# Set display options to show all rows and columns
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+
+# Print the DataFrame
+print("DataFrame with the data:")
+print(df)
+```
+
+**Summary/Findings**
+
+- There are only 2 people in this database who have played for BYU-Idaho baseball.
+
+- The most money made by either was $4,000,000.00
+
+- The least amount made by either player was $150,000.00
+
+## QUESTION|TASK 2
+
+This three-part question requires you to calculate batting average (number of hits divided by the number of at-bats)
+
+**QUESTION|TASK 2.1**
+
+Write an SQL query that provides playerID, yearID, and batting average for players with at least 1 at bat that year. Sort the table from highest batting average to lowest, and then by playerid alphabetically. Show the top 5 results in your report.
+
+```{python}
+# Connect to the SQLite database
+file = 'lahmansbaseballdb.sqlite'
+con = sqlite3.connect(file)
+
+# Execute the SQL query and store the results in a DataFrame
+query = """
+SELECT
+    playerID,
+    yearID,
+    CAST(H AS REAL) / AB AS batting_average
+FROM
+    Batting
+WHERE
+    AB > 0
+ORDER BY
+    batting_average DESC,
+    playerID DESC
+LIMIT 5;
+"""
+
+
+df = pd.read_sql_query(query, con)
+# Show the data
+print(df)
+```
+
+**Summary/Findings**
+
+- Everyone in the top 5 had a 100% average, which means that they probably didn't bat much.
+
+- The years don't seem to show a pattern, at least for the top 5 shown. 
+
+**QUESTION|TASK 2.2**
+
+Use the same query as above, but only include players with at least 10 at bats that year. Print the top 5 results.
+
+```{python}
+# Connect to the SQLite database
+file = 'lahmansbaseballdb.sqlite'
+con = sqlite3.connect(file)
+
+# Execute the SQL query and store the results in a DataFrame
+query = """
+SELECT
+    playerID,
+    yearID,
+    CAST(H AS REAL) / AB AS batting_average
+FROM
+    Batting
+WHERE
+    AB > 9
+ORDER BY
+    batting_average DESC,
+    playerID ASC
+LIMIT 5;
+"""
+
+
+df = pd.read_sql_query(query, con)
+# Show the data
+print(df)
+```
+
+**Summary/Findings**
+
+- The batting averages dropped substantially went you exclude the people that have batted less than 10 times that year.
+
+- All of the top averages are around 60%.
+
+- Again the years don't show a clear pattern with the data shown.
+
+**QUESTION|TASK 2.3**
+
+Now calculate the batting average for players over their entire careers (all years combined). Only include players with at least 100 at bats, and print the top 5 results.
+
+```{python}
+# Connect to the SQLite database
+file = 'lahmansbaseballdb.sqlite'
+con = sqlite3.connect(file)
+
+# Execute the SQL query and store the results in a DataFrame
+query = """
+SELECT
+    s.playerID,
+    SUM(H) AS total_hits,
+    SUM(AB) AS total_at_bats,
+    CAST(SUM(H) AS REAL) / NULLIF(SUM(AB), 0) AS career_batting_average
+FROM
+    Salaries s
+JOIN
+    Batting b ON s.playerID = b.playerID
+GROUP BY
+    s.playerID
+HAVING
+    total_at_bats >= 100
+ORDER BY
+    career_batting_average DESC
+LIMIT 5;
+"""
+
+df = pd.read_sql_query(query, con)
+
+# Show the data
+print(df.head())
+```
+**Summary/Findings**
+
+-  The highest batting average is 40%.
+
+- The most impressive of these top 5 is gwynnto01 (), because he has batted substantially more then all of the others, therefore the average will even out to a more true average taking out outliners, like hitting every time in one game because of a bad pitcher.
+
+- From the 1st to the 5th it drops quitly, almost 7%.
+
+## QUESTION|TASK 3
+
+Pick any two baseball teams and compare them using a metric of your choice (average salary, home runs, number of wins, etc). Write an SQL query to get the data you need, then make a graph using Plotly Express to visualize the comparison. What do you learn?
+
+```{python}
+import sqlite3
+import pandas as pd
+import plotly.express as px
+import numpy as np
+from sklearn.linear_model import LinearRegression
+
+# Connect to the SQLite database
+file = 'lahmansbaseballdb.sqlite'
+con = sqlite3.connect(file)
+
+# Execute the SQL query and store the results in a DataFrame
+query = """
+SELECT
+    t.W AS wins,
+    t.yearID,
+    s.schoolID
+FROM
+    schools s
+JOIN
+    collegeplaying cp ON s.schoolID = cp.schoolID
+JOIN
+    batting b ON b.playerID = cp.playerID
+JOIN
+    teams t ON t.teamID = b.teamID
+WHERE
+    s.schoolID IN ('weberst', 'sfaustin')  -- Use IN to specify multiple schools
+ORDER BY
+    t.yearID ASC;  -- Order by yearID in ascending order
+"""
+
+df = pd.read_sql_query(query, con)
+
+# Group the data by school and calculate linear regression for each school
+trendlines = {}
+for school, data in df.groupby('schoolID'):
+    X = data['yearID'].values.reshape(-1, 1)
+    y = data['wins'].values.reshape(-1, 1)
+    model = LinearRegression()
+    model.fit(X, y)
+    trendlines[school] = model.predict(X)
+
+# Create a line plot using Plotly Express
+fig = px.line(df, x='yearID', y='wins', color='schoolID',
+              title='Wins Over Years for Weber State and Stephen F. Austin',
+              color_discrete_map = {'weberst': 'purple', 'sfaustin': 'red'},  labels={'yearID': 'Year', 'wins': 'Wins', 'schoolID': 'Schools'})
+
+# Define colors for trend lines
+trendline_colors = {'weberst': 'blue', 'sfaustin': 'green'}
+
+# Add trend lines to the plot with different colors
+for school, trendline in trendlines.items():
+    fig.add_scatter(x=df[df['schoolID'] == school]['yearID'], y=trendline.flatten(), mode='lines',
+                    name=f'Trendline ({school})', line=dict(color=trendline_colors[school], width=3))
+
+# Update the opacity of the "normal" lines
+for trace in fig.data:
+    if 'Trendline' not in trace['name']:
+        trace['opacity'] = 0.5
+
+# Define custom legend labels
+legend_labels = {
+    'weberst': 'Weber State',
+    'sfaustin': 'Stephen F. Austin',
+}
+
+# Update the legend labels for trendlines
+for trace in fig.data:
+    if 'Trendline' in trace['name']:
+        # Extract the school name from the trace name
+        school_start_idx = trace['name'].find('(') + 1
+        school_end_idx = trace['name'].find(')')
+        school = trace['name'][school_start_idx:school_end_idx].lower()
+        trace['legendgroup'] = f'{school}_trendline'
+        trace['name'] = f'{legend_labels.get(school, school)} (Trendline)'
+
+# Update the legend labels for normal lines
+for trace in fig.data:
+    if 'Trendline' not in trace['name']:
+        school = trace['name'].split()[0].lower()
+        trace['legendgroup'] = school
+        trace['name'] = legend_labels.get(school, school)
+
+fig.show()
+```
+
+**Summary/Findings**
+
+- Stephen F. Austin University is doing better overall as far as wins.
+
+- These two schools are very well matched to each other, and win about the same amount.
+
+- They both pass each other frequently in the number of wins year to year.
+
+- Weber more frequently drops down and jumps in the number of wins.
+
+- Stephen F. Austin has stayed relatively steady over the years.
+
+- Both teams are improving although very slowly.

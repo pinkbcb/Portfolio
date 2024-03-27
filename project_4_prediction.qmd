@@ -1,0 +1,307 @@
+---
+title: "Project 4: Can you predict that?"
+subtitle: "Course: DS 250"
+author: "Bethany Ball"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+#| label: libraries
+#| include: false
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+```
+
+
+## Elevator pitch
+
+This shows housing data and the best ways to find out if a house was built before 1980. It also demests mechine learning, how it works in this context, etc. Overall it demosts a model for mechine learning on how to tell if a house was built before 1980 based on a dataset.
+
+```{python}
+#| label: project data
+#| code-summary: Read and format project data
+# Include and execute your code here
+df = pd.read_csv("https://raw.githubusercontent.com/byuidatascience/data4dwellings/master/data-raw/dwellings_ml/dwellings_ml.csv")
+```
+
+## QUESTION|TASK 1
+Create 2-3 charts that evaluate potential relationships between the home variables and before1980. Explain what you learn from the charts that could help a machine learning algorithm.
+
+Only one of these charts was very useful at helping find if the house was built before 1980, and that was the 'Year Built' chart, witch makes seance. Some of the other charts could help but wouldn't be that accrate.
+
+```{python}
+#chart one sell price 
+fig = px.scatter(df, x='before1980', y='sprice', title='Sell Price vs. Year Built', color='before1980', 
+             color_discrete_map={1: 'blue', 0: 'red'})
+fig.update_layout(xaxis_title='Year Built (1: Before 1980, 0: After 1980)', yaxis_title='Sell Price')
+
+#year build v before1980
+fig = px.scatter(df, x='before1980', y='yrbuilt', title='Year built vs. before1980')
+fig.update_layout(xaxis_title='Before 1980 (1: Yes, 0: No)', yaxis_title='Year Built')
+fig.show()
+
+# liveable area v before1980
+fig = px.scatter(df, x = 'before1980', y = 'livearea', title = 'Square footage that is liveable v. before1980')
+fig.update_layout(xaxis_title = 'Built Before 1980 (1: Yes, 0: No)', yaxis_title = 'Square footage that is liveable')
+fig.show()
+
+#deduction in price v yearbuilt
+fig = px.scatter(df, x = 'before1980', y = 'deduct', title = 'Deduction from the selling price v. before1980')
+fig.update_layout(xaxis_title = 'Built Before 1980 (1: Yes, 0: No)', yaxis_title = 'Deduction from the selling price')
+fig.show()
+```
+
+**Summery/Findings**
+
+- The year the house is build is the best way out of the four that I tested to find out if a house was built before 1980. (go figure)
+
+- 'Deduction from the selling price' was okay at finding if a house was built before 1980, but very flewed, it showed that if it was built before 1980 the price was capted at about 20K but after that it capted at 100K, but there is still a lot of overlap.
+
+- 'Square footage that is liveable' is very useless. Both the built before 1980s and after are almost identical.
+
+- The 'Sell Price' is almost identical to the 'Deduction from the selling price', but a little worst, with less above the before 1980s cut-off, witch makes it less usful.
+
+## QUESTION|TASK 2
+Build a classification model labeling houses as being built “before 1980” or “during or after 1980”. Your goal is to reach or exceed 90% accuracy. Explain your final model choice (algorithm, tuning parameters, etc) and describe what other models you tried.
+
+I chose to use the RandomForestClassifier for my model. I used it becouse out of the twentey or so models I tried it had the highest accuracy, without overfiting. I also chhose to use a 30/70 for my perameter, this seemed to work the best and is very commonly recoginized a being genreally a good ratio in the inductry.
+
+```{python}
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
+
+from sklearn import metrics
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestRegressor
+
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+
+
+# Remove year built, and before 1980 from data to be trained.
+
+# number bedrooms and number of bathrooms
+
+# corr()
+# df = df.drop('parcel', axis = 1)
+# 
+
+
+
+# Read the CSV file into a DataFrame
+df = pd.read_csv('dwellings_ml.csv')
+
+
+# Remove the '-' characters from the 'parcel' column
+df['parcel'] = df['parcel'].str.replace('-', '')
+
+
+# Convert the 'parcel' column to integer
+df['parcel'] = df['parcel'].astype(int)
+
+df = df.drop('yrbuilt', axis = 1)
+
+df.columns
+
+# Define features and target
+features = df.drop('before1980', axis=1)  # Drop the target column
+target = df['before1980']
+
+# Split data into training and testing sets
+train_data, test_data, train_targets, test_targets = train_test_split(features, target, test_size = .3)
+                                                                      
+
+# Instantiate Gaussian Naive Bayes classifier
+classifier = RandomForestClassifier()
+# classifier = DecisionTreeClassifier()
+# classifier = GradientBoostingClassifier()
+# classifier = tree(max_depth=10, n_estimators=500)
+
+# Train the classifier
+classifier.fit(train_data, train_targets)
+
+# Predict using the trained classifier
+targets_predicted = classifier.predict(test_data)
+
+# Calculate accuracy
+accuracy = metrics.accuracy_score(test_targets, targets_predicted)
+print("Accuracy:", accuracy)
+```
+
+**Summery/Findings**
+
+- this model is 93-95% accurate
+
+- It uses the GradientBoostingClassifier formula
+
+- It seporates it 30%-70% training and checking
+    
+## QUESTION|TASK 3
+Justify your classification model by discussing the most important features selected by your model. This discussion should include a chart and a description of the features.
+
+Acording to my caculations the top five features are as follows:
+
+1. Parcel
+
+2. arcstyle_TWO-STORY
+
+3. quality_C
+
+4. abstrprd
+
+5. gartype_Att
+
+```{python}
+#%%
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
+
+from sklearn import metrics
+from sklearn.tree import DecisionTreeClassifier
+
+from sklearn.tree import DecisionTreeRegressor
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+
+#%%
+# Remove year built, and before 1980 from data to be trained.
+
+# number bedrooms and number of bathrooms
+
+# corr()
+# df = df.drop('parcel', axis = 1)
+# 
+
+
+#%%
+# Read the CSV file into a DataFrame
+df = pd.read_csv('dwellings_ml.csv')
+
+#%%
+# Remove the '-' characters from the 'parcel' column
+df['parcel'] = df['parcel'].str.replace('-', '')
+
+#%%
+# Convert the 'parcel' column to integer
+df['parcel'] = df['parcel'].astype(int)
+
+
+
+#%%
+
+df = df.drop('yrbuilt', axis = 1)
+
+df.columns
+
+#%%
+# Define features and target
+features = df.drop('before1980', axis=1)  # Drop the target column
+target = df['before1980']
+
+# Split data into training and testing sets
+train_data, test_data, train_targets, test_targets = train_test_split(features, target, test_size = .3)
+                                                                      
+
+# Instantiate Gaussian Naive Bayes classifier
+classifier = GradientBoostingClassifier()
+# classifier = tree(max_depth=10, n_estimators=500)
+
+# Train the classifier
+classifier.fit(train_data, train_targets)
+
+# Predict using the trained classifier
+targets_predicted = classifier.predict(test_data)
+
+# Calculate accuracy
+accuracy = metrics.accuracy_score(test_targets, targets_predicted)
+print("Accuracy:", accuracy)
+
+
+
+#%%
+
+import matplotlib.pyplot as plt
+
+# Get feature importances
+feature_importances = classifier.feature_importances_
+
+# Get the names of the features
+feature_names = features.columns
+
+# Create a DataFrame to hold feature names and their importances
+feature_importance_df = pd.DataFrame({
+    'Feature': feature_names,
+    'Importance': feature_importances
+})
+
+# Sort the DataFrame by importance
+feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
+
+# Plotting the feature importance
+plt.figure(figsize=(10, 6))
+plt.barh(feature_importance_df['Feature'], feature_importance_df['Importance'])
+plt.xlabel('Importance')
+plt.ylabel('Feature')
+plt.title('Feature Importance')
+plt.show()
+
+# Display top 5 features
+print("Top 5 features:")
+print(feature_importance_df.head())
+
+```
+    
+## QUESTION|TASK 4    
+Describe the quality of your classification model using 2-3 different evaluation metrics. You also need to explain how to interpret each of the evaluation metrics you use.
+
+
+My metrics are as follows: 
+
+Accuracy: Accuracy measures the proportion of correctly classified instances out of the total instances. It is calculated as the ratio of the number of correct predictions to the total number of predictions.
+    Interpretation: An accuracy of 90% means that 90% of the predictions made by the model are correct. However, accuracy alone might not provide a complete picture of the model's performance, especially in imbalanced datasets where one class dominates the other.
+
+    - This model is very accurate at about 93-95%%.
+
+Precision and Recall: Precision and recall are metrics often used together, especially in binary classification tasks.
+
+    Precision: Precision is the ratio of correctly predicted positive observations to the total predicted positive observations. It focuses on the accuracy of positive predictions.
+    Precision=TPTP+FPPrecision=TP+FPTP​
+
+    Recall: Recall, also known as sensitivity or true positive rate, is the ratio of correctly predicted positive observations to the all observations in actual class.
+    Recall=TPTP+FNRecall=TP+FNTP​
+
+    Interpretation: Precision indicates the proportion of correctly predicted positive cases out of all cases predicted as positive. Recall indicates the proportion of correctly predicted positive cases out of all actual positive cases. A high precision value means that when the model predicts a positive case, it is likely to be correct. A high recall value means that the model is able to correctly identify most of the positive cases.
+
+    - It is very good in the case of this model.
