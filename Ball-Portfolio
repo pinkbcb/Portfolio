@@ -1,0 +1,77 @@
+project: 
+  type: website
+
+website:
+  title: "Bethany Ball Data Science Portfolio"
+  favicon: Images/favicon.png
+  back-to-top-navigation: true
+  repo-url: https://github.com/your_url
+  #repo-actions: [issue] #if you want to allow others to report issues on your site uncomment this line
+
+  page-footer: 
+    border: true
+    left: "Bethany Ball 2024©"
+    right: 
+      - icon: linkedin
+        href: www.linkedin.com/in/bethany-c-ball
+
+  navbar:
+    background: primary
+    search: true   
+    right:
+      - text: "Home"
+        file: index.qmd
+      - text: "DS250 Projects"
+        file: projects.qmd
+      - text: "My Resume"
+        file: resume.md
+      - text: "Data Cleansing"
+        file: cleansing.qmd
+      - text: "Data Exploration"
+        file: exploration.qmd
+      - text: "Story Telling"
+        file: story_telling.qmd
+      - text: "Machine Learning"
+        file: ml.qmd
+      - text: "Full Stack"
+        file: full_stack.qmd
+      - text: "Competition"
+        file: competition.qmd
+      
+  sidebar:
+    - title: "DS 250 Projects"
+      style: "docked"
+      background: light
+      contents:
+        - text: "DS250 Projects"
+        - text: "Project 1"
+          file: Portfolio/project_1_baby_names.qmd
+        - text: "This project analyzes the popularity of baby names over the years."
+        - text: "Project 2"
+          file: Portfolio/project_2_late_flights.qmd
+        - text: "This project explores airplane delays. It also involves a little data cleaning."
+        - text: "Project 3"
+          file: Portfolio/project_3_baseball.qmd
+        - text: "This project explores trending in baseball. It also uses JSON and SQLite as tools to complete the project."
+        - text: "Project 4"
+          file: Portfolio/project_4_houses.qmd
+        - text: "This project uses machine learning to predict if a house was built before 1980."
+        - text: "Project 5"          
+          file: Portfolio/project_5_star_wars.qmd
+        - text: "This project analyzes data about Star Wars fans. It mostly focuses on data cleaning, although it does involve some machine learning and visualizations."
+
+        #continue the pattern if you need more links
+        #copy paste from title and keep it indented to sidebar to add additonal sidebar navigation for other pages
+
+format:  
+  html:
+    theme: #see this link to customize the theme with css (https://quarto.org/docs/output-formats/html-themes.html#dark-mode)
+      light: flatly # more themes can be found [here](https://quarto.org/docs/output-formats/html-themes.html)
+      dark: darkly
+      #light: cosmo
+      #dark: [cosmo, theme-dark.scss]
+    css: styles.css
+    toc: true
+
+
+
